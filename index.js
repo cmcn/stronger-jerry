@@ -12,8 +12,8 @@ slack.on('message', function (data) {
 
   if (data.text === '!dog') {
     getDog(data.channel);
-  } else if (data.text.substring(0, 5) === '!pick') {
-    pickOption(data.text, channel);
+  } else if (data.text.slice(0, 5) === '!pick') {
+    pickOption(data.text, data.channel);
   }
 });
 
@@ -25,4 +25,11 @@ function getDog(channel) {
 
     slack.sendMsg(channel, JSON.parse(body)['data']['children'][rand]['data']['preview']['images'][0]['source']['url']);
   });
+}
+
+function pickOption(text, channel) {
+  const options = text.slice(5).split(",");
+  const rand = Math.floor((Math.random() * options.length));
+
+  slack.sendMsg(channel, options[rand]);
 }
