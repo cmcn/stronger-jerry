@@ -1,0 +1,25 @@
+{
+  "name": "stronger-jerry",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cmcn/stronger-jerry"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/cmcn/stronger-jerry/issues"
+  },
+  "homepage": "https://github.com/cmcn/stronger-jerry",
+  "dependencies": {
+    "request": "^2.74.0",
+    "slackbotapi": "^1.3.9"
+  }
+}
