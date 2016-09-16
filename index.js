@@ -10,11 +10,16 @@ var slack = new slackAPI({
 slack.on('message', function (data) {
   if (!data.text) { return; }
 
-  if (data.text === '!dog') {
-    getDog(data.channel);
-  } else if (data.text.slice(0, 5) === '!pick') {
-    pickOption(data.text, data.channel);
-  }
+  const command = data.text.split(' ')[0];
+
+  switch (command) {
+    case '!dog':
+      getDog(data.channel);
+      break;
+    case '!pick':
+      pickOption(data.text, data.channel);
+      break;
+  };
 });
 
 function getDog(channel) {
