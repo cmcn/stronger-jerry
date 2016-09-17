@@ -8,24 +8,30 @@ var slack = new slackAPI({
 });
 
 slack.on('message', function (data) {
+  var command;
+
   if (!data.text) { return; }
 
-  const command = data.text.split(' ')[0];
+  if (data.text[0] === '!') {
+    command = data.text.split(' ')[0];
 
-  switch (command) {
-    case '!dog':
-      getDog(data.channel);
-      break;
-    case '!pick':
-      pickOption(data.text, data.channel);
-      break;
-    case '!roulette':
-      playRoulette(data.channel);
-      break;
-    case '!roll':
-      rollDice(data.text, data.channel);
-      break;
-  };
+    switch (command) {
+      case '!dog':
+        getDog(data.channel);
+        break;
+      case '!pick':
+        pickOption(data.text, data.channel);
+        break;
+      case '!roulette':
+        playRoulette(data.channel);
+        break;
+      case '!roll':
+        rollDice(data.text, data.channel);
+        break;
+    };
+  } else if (data.text.toLowerCase().indexOf('jerry') >= 0 && data.text.toLowerCase().indexOf('help') >= 0) {
+    slack.sendMsg(data.channel, "Sorry, I can't help you. Nothing can.");
+  }
 });
 
 function getDog(channel) {
