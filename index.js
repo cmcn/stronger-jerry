@@ -19,6 +19,9 @@ slack.on('message', function (data) {
     case '!pick':
       pickOption(data.text, data.channel);
       break;
+    case '!roulette':
+      playRoulette(data.channel);
+      break;
   };
 });
 
@@ -37,4 +40,14 @@ function pickOption(text, channel) {
   const rand = Math.floor((Math.random() * options.length));
 
   slack.sendMsg(channel, options[rand]);
+}
+
+function playRoulette(channel) {
+  const rand = Math.floor(Math.random() * 6);
+
+  if (rand === 0) {
+    slack.sendMsg(channel, ':boom: :gun: Bang! you\'re dead');
+  } else {
+    slack.sendMsg(channel, 'You live.... for now.');
+  }
 }
