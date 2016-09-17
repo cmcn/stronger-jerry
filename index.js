@@ -22,6 +22,9 @@ slack.on('message', function (data) {
     case '!roulette':
       playRoulette(data.channel);
       break;
+    case '!roll':
+      rollDice(data.text, data.channel);
+      break;
   };
 });
 
@@ -50,4 +53,33 @@ function playRoulette(channel) {
   } else {
     slack.sendMsg(channel, 'You live.... for now.');
   }
+}
+
+function rollDice(text, channel) {
+  const splitText = text.split(' ');
+  var diceText, roll, rolls = [];
+  var numDice = 1;
+  var diceType = 20;
+  var sum = 0;
+
+  if (splitText.length >= 2) {
+    if (splitText[1].match(/\S?([d])\d\d?/g)) {
+      diceText = splitText[1].split('d');
+      numDice = parseInt(diceText[0]);
+      diceType = parseInt(diceText[1]);
+    } else {
+      slack.sendMsg(channel, "I don't think I can roll that.");
+      return;
+    }
+  }
+
+  for (var i = 0; i < parseInt(numDice); i++) {
+    roll = Math.floor((Math.random() * parseInt(diceType)) + 1)
+    rolls.push(roll);
+    sum += roll;
+  }
+
+  var message = "*" + sum.toString() + "*" + "\n[" + rolls.toString() + "]";
+
+  slack.sendMsg(channel, message);
 }
