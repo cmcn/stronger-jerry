@@ -55,7 +55,7 @@ function playRoulette(channel) {
   const rand = Math.floor(Math.random() * 6);
 
   if (rand === 0) {
-    slack.sendMsg(channel, ':boom: :gun: Bang! you\'re dead');
+    slack.sendMsg(channel, ':boom: :gun: You\'re dead');
   } else {
     slack.sendMsg(channel, 'You live.... for now.');
   }
