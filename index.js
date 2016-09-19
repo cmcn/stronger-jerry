@@ -79,6 +79,11 @@ function rollDice(text, channel) {
     }
   }
 
+  if (numDice > 1000) {
+    slack.sendMsg(channel, "Chill with all the dice.");
+    return;
+  }
+
   for (var i = 0; i < parseInt(numDice); i++) {
     roll = Math.floor((Math.random() * parseInt(diceType)) + 1)
     rolls.push(roll);
