@@ -69,9 +69,13 @@ function rollDice(text, channel) {
   var sum = 0;
 
   if (splitText.length >= 2) {
-    if (splitText[1].match(/\S?([d])\d\d?/g)) {
+    if (splitText[1].match(/^(\d*)[d](\d+)$/)) {
       diceText = splitText[1].split('d');
-      numDice = parseInt(diceText[0]);
+
+      if (diceText[0]) {
+        numDice = parseInt(diceText[0]);
+      }
+
       diceType = parseInt(diceText[1]);
     } else {
       slack.sendMsg(channel, "I don't think I can roll that.");
@@ -84,8 +88,8 @@ function rollDice(text, channel) {
     return;
   }
 
-  for (var i = 0; i < parseInt(numDice); i++) {
-    roll = Math.floor((Math.random() * parseInt(diceType)) + 1)
+  for (var i = 0; i < numDice; i++) {
+    roll = Math.floor((Math.random() * diceType) + 1)
     rolls.push(roll);
     sum += roll;
   }
