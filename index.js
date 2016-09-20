@@ -1,10 +1,21 @@
+var cronJob = require('cron').CronJob;
 var request = require('request');
 var slackAPI = require('slackbotapi');
 
+var humanHypeChannel = "C1UK6RYQY";
+
 var slack = new slackAPI({
-    'token': process.env.SLACK_TOKEN,
-    'logging': true,
-    'autoReconnect': true
+  'token': process.env.SLACK_TOKEN,
+  'logging': true,
+  'autoReconnect': true
+});
+
+var weatherJob = new cronJob('00 00 7 * * *', function() {
+  getWeather(humanHypeChannel);
+});
+
+slack.on('hello', function() {
+  weatherJob.start();
 });
 
 slack.on('message', function (data) {
@@ -28,9 +39,6 @@ slack.on('message', function (data) {
       case '!roll':
         rollDice(data.text, data.channel);
         break;
-      // case '!weather':
-      //   getWeather(data.channel);
-      //   break;
     };
   } else if (data.text.toLowerCase().indexOf('jerry') >= 0 && data.text.toLowerCase().indexOf('help') >= 0) {
     slack.sendMsg(data.channel, "Sorry, I can't help you. Nothing can.");
