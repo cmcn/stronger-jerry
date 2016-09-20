@@ -28,6 +28,9 @@ slack.on('message', function (data) {
       case '!roll':
         rollDice(data.text, data.channel);
         break;
+      // case '!weather':
+      //   getWeather(data.channel);
+      //   break;
     };
   } else if (data.text.toLowerCase().indexOf('jerry') >= 0 && data.text.toLowerCase().indexOf('help') >= 0) {
     slack.sendMsg(data.channel, "Sorry, I can't help you. Nothing can.");
@@ -97,4 +100,38 @@ function rollDice(text, channel) {
   var message = "*" + sum.toString() + "*" + "\n[" + rolls.toString() + "]";
 
   slack.sendMsg(channel, message);
+}
+
+function getWeather(channel) {
+  const url = "http://api.wunderground.com/api/" + process.env.WUNDERGROUND_TOKEN + "/forecast/q/MA/Boston.json";
+
+  request(url, function(error, response, body) {
+    const weatherDays = JSON.parse(body)['forecast']['simpleforecast']['forecastday'];
+    var response = '```date         | high | low | conditions \n----------------------------------------------\n';
+
+    weatherDays.forEach(function(day) {
+      var dateText = day['date']['monthname_short'] + ' ' + day['date']['day'] + ", " + day['date']['year'];
+      var highText = ' ' + day['high']['fahrenheit'] + '°';
+      var lowText = ' ' + day['low']['fahrenheit'] + '°';
+      var conditionsText = ' ' + day['conditions'];
+
+      for (i = dateText.length; i < 13; i++) {
+        dateText = dateText.concat(' ');
+      }
+
+      for (i = highText.length; i < 6; i++) {
+        highText = highText.concat(' ');
+      }
+
+      for (i = lowText.length; i < 5; i++) {
+        lowText = lowText.concat(' ');
+      }
+
+      response = response.concat(dateText + '|' + highText + '|' + lowText + '|' + conditionsText + '\n');
+    });
+
+    response = response.concat('```');
+
+    slack.sendMsg(channel, response);
+  });
 }
