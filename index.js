@@ -1,8 +1,12 @@
+require('dotenv').load();
+
 var cronJob = require('cron').CronJob;
 var request = require('request');
 var slackAPI = require('slackbotapi');
 
+var gamesChannel = "C0JJ7R672";
 var humanHypeChannel = "C1UK6RYQY";
+var streamsToCheck = ["cumpp"];
 
 var slack = new slackAPI({
   'token': process.env.SLACK_TOKEN,
@@ -12,6 +16,10 @@ var slack = new slackAPI({
 
 var weatherJob = new cronJob('00 00 7 * * *', function() {
   getWeather(humanHypeChannel);
+});
+
+var twitchJob = new cronJob('0 * * * * *', function() {
+  checkTwitchOnlineStatus();
 });
 
 slack.on('hello', function() {
@@ -141,5 +149,22 @@ function getWeather(channel) {
     response = response.concat('```');
 
     slack.sendMsg(channel, response);
+  });
+}
+
+function checkTwitchOnlineStatus(channel) {
+  streamsToCheck.forEach(function(streamName) {
+    const url = "https://api.twitch.tv/kraken/streams/" + streamName;
+
+    request({
+      headers: { "Client-ID": process.env.TWITCH_CLIENT_ID },
+      uri: url
+    }, function(error, response, body) {
+      const message = "https://www.twitch.com/" + streamName + " is now online!";
+
+      if (body["stream"]) {
+        slack.sendMsg(gamesChannel, message);
+      }
+    });
   });
 }
