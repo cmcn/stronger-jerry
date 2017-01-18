@@ -153,6 +153,8 @@ function getWeather(channel) {
 }
 
 function checkTwitchOnlineStatus(channel) {
+  console.log('checking online status');
+
   streamsToCheck.forEach(function(streamName) {
     const url = "https://api.twitch.tv/kraken/streams/" + streamName;
 
