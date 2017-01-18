@@ -24,6 +24,7 @@ var twitchJob = new cronJob('0 * * * * *', function() {
 
 slack.on('hello', function() {
   weatherJob.start();
+  twitchJob.start();
 });
 
 slack.on('message', function (data) {
