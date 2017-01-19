@@ -167,11 +167,18 @@ function checkTwitchOnlineStatus(channel) {
       const streamDetails = body["stream"];
 
       if (streamDetails) {
-        const createdAt = new Date(streamDetails["created_at"]).getTime();
-        const now = Date.now();
+        console.log("cumpp online");
 
-        if (((now - 60000) < createdAt) && now > createdAt) {
-          slack.sendMsg(gamesChannel, message);
+        const createdAt = new Date(streamDetails["created_at"]);
+        const now = new Date();
+
+        if (now > createdAt) {
+          const oneMinuteAgo = now.setMinutes(now.getMinutes() - 1);
+
+          if (oneMinuteAgo < createdAt)) {
+            console.log("cumpp just came online");
+            slack.sendMsg(gamesChannel, message);
+          }
         }
       }
     });
