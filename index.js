@@ -175,7 +175,7 @@ function checkTwitchOnlineStatus(channel) {
         if (now > createdAt) {
           const oneMinuteAgo = now.setMinutes(now.getMinutes() - 1);
 
-          if (oneMinuteAgo < createdAt)) {
+          if (oneMinuteAgo < createdAt) {
             console.log("cumpp just came online");
             slack.sendMsg(gamesChannel, message);
           }
