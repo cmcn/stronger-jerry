@@ -164,9 +164,15 @@ function checkTwitchOnlineStatus(channel) {
       uri: url
     }, function(error, response, body) {
       const message = "https://www.twitch.com/" + streamName + " is now online!";
+      const streamDetails = body["stream"];
 
-      if (body["stream"]) {
-        slack.sendMsg(gamesChannel, message);
+      if (streamDetails) {
+        const createdAt = new Date(streamDetails["created_at"]).getTime();
+        const now = Date.now();
+
+        if (((now - 60000) < createdAt) && now > createdAt) {
+          slack.sendMsg(gamesChannel, message);
+        }
       }
     });
   });
