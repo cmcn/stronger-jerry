@@ -7,6 +7,7 @@ var slackAPI = require('slackbotapi');
 
 var twitchTools = require('./twitch_tools');
 
+var gamesChannel = process.env.GAMES_CHANNEL;
 var humanHypeChannel = process.env.HUMAN_HYPE_CHANNEL;
 
 var slack = new slackAPI({
@@ -34,7 +35,22 @@ slack.on('message', function (data) {
   if (!data.text) { return; }
 
   if (data.text[0] === '!') {
-    command = data.text.split(' ')[0];
+    const splitText = data.text.split(' ');
+
+    command = splitText[0];
+
+    if (data.channel === gamesChannel) {
+      const value = splitText[1];
+
+      switch(command) {
+        case '!addChannel':
+          twitchTools.addTwitchChannel(slack, value);
+          break;
+        case '!removeChannel':
+          twitchTools.removeTwitchChannel(slack, value);
+          break;
+      };
+    }
 
     switch (command) {
       case '!dog':

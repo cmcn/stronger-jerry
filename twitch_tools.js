@@ -112,7 +112,7 @@ module.exports = {
         } else {
           done();
 
-          slack.sendMsg(gamesChannel, channelName + " is not in the list.");
+          slack.sendMsg(gamesChannel, channelName + " is not on the list.");
         }
       });
     });
