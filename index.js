@@ -1,6 +1,7 @@
 require('dotenv').load();
 
 var cronJob = require('cron').CronJob;
+var pg = require('pg');
 var request = require('request');
 var slackAPI = require('slackbotapi');
 
@@ -154,32 +155,44 @@ function getWeather(channel) {
 }
 
 function checkTwitchOnlineStatus(channel) {
-  console.log('checking online status');
 
-  streamsToCheck.forEach(function(streamName) {
-    const url = "https://api.twitch.tv/kraken/streams/" + streamName;
+  pg.connect(process.env.DATABASE_URL, function(err, client, done) {
+    if (err) {
+      console.log("connect error: " + err);
 
-    request({
-      headers: { "Client-ID": process.env.TWITCH_CLIENT_ID },
-      uri: url
-    }, function(error, response, body) {
-      const message = "https://www.twitch.com/" + streamName + " is now online!";
-      const streamDetails = body["stream"];
+      done();
+    }
 
-      if (streamDetails) {
-        console.log("cumpp online");
+    client.query('SELECT * FROM twitch_streams', function(err, result) {
+      if (err) {
+        console.log("PG Error: " + err);
+      } else {
+        result['rows'].forEach(function(row) {
+          const streamName = row['name'];
+          const message = "https://www.twitch.com/" + streamName + " is now online!";
+          const url = "https://api.twitch.tv/kraken/streams/" + streamName;
 
-        const createdAt = new Date(streamDetails["created_at"]);
-        const now = new Date();
+          request({
+            headers: { "Client-ID": process.env.TWITCH_CLIENT_ID },
+            uri: url
+          }, function(error, response, body) {
+            const message = "https://www.twitch.com/" + streamName + " is now online!";
+            const streamDetails = body["stream"];
 
-        if (now > createdAt) {
-          const oneMinuteAgo = now.setMinutes(now.getMinutes() - 1);
-
-          if (oneMinuteAgo < createdAt) {
-            console.log("cumpp just came online");
-            slack.sendMsg(gamesChannel, message);
-          }
-        }
+            if (!streamDetails && row['online']) {
+              client.query("UPDATE twitch_streams SET online = false WHERE name = '" + streamName + "'", function(err, result) {
+                done();
+              });
+            } else if (streamDetails && !row['online']) {
+              client.query("UPDATE twitch_streams SET online = true WHERE name = '" + streamName + "'", function(err, result) {
+                slack.sendMsg(gamesChannel, message);
+                done();
+              });
+            } else {
+              done();
+            }
+          });
+        });
       }
     });
   });
