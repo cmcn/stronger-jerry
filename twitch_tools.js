@@ -1,5 +1,8 @@
+var pg = require('pg');
+var request = require('request');
+
 module.exports = {
-  checkTwitchOnlineStatus: function(channel) {
+  checkTwitchOnlineStatus: function(slack) {
     pg.connect(process.env.DATABASE_URL, function(err, client, done) {
       if (err) {
         console.log("connect error: " + err);

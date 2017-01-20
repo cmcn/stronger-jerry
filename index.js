@@ -21,7 +21,7 @@ var weatherJob = new cronJob('00 00 7 * * *', function() {
 });
 
 var twitchJob = new cronJob('0 * * * * *', function() {
-  twitchTools.checkTwitchOnlineStatus();
+  twitchTools.checkTwitchOnlineStatus(slack);
 });
 
 slack.on('hello', function() {
