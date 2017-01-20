@@ -5,9 +5,10 @@ var pg = require('pg');
 var request = require('request');
 var slackAPI = require('slackbotapi');
 
+var twitchTools = require('./twitch_tools');
+
 var gamesChannel = "C0JJ7R672";
 var humanHypeChannel = "C1UK6RYQY";
-var streamsToCheck = ["cumpp"];
 
 var slack = new slackAPI({
   'token': process.env.SLACK_TOKEN,
@@ -20,7 +21,7 @@ var weatherJob = new cronJob('00 00 7 * * *', function() {
 });
 
 var twitchJob = new cronJob('0 * * * * *', function() {
-  checkTwitchOnlineStatus();
+  twitchTools.checkTwitchOnlineStatus();
 });
 
 slack.on('hello', function() {
@@ -151,49 +152,5 @@ function getWeather(channel) {
     response = response.concat('```');
 
     slack.sendMsg(channel, response);
-  });
-}
-
-function checkTwitchOnlineStatus(channel) {
-
-  pg.connect(process.env.DATABASE_URL, function(err, client, done) {
-    if (err) {
-      console.log("connect error: " + err);
-
-      done();
-    }
-
-    client.query('SELECT * FROM twitch_streams', function(err, result) {
-      if (err) {
-        console.log("PG Error: " + err);
-      } else {
-        result['rows'].forEach(function(row) {
-          const streamName = row['name'];
-          const message = "https://www.twitch.com/" + streamName + " is now online!";
-          const url = "https://api.twitch.tv/kraken/streams/" + streamName;
-
-          request({
-            headers: { "Client-ID": process.env.TWITCH_CLIENT_ID },
-            uri: url
-          }, function(error, response, body) {
-            const message = "https://www.twitch.com/" + streamName + " is now online!";
-            const streamDetails = body["stream"];
-
-            if (!streamDetails && row['online']) {
-              client.query("UPDATE twitch_streams SET online = false WHERE name = '" + streamName + "'", function(err, result) {
-                done();
-              });
-            } else if (streamDetails && !row['online']) {
-              client.query("UPDATE twitch_streams SET online = true WHERE name = '" + streamName + "'", function(err, result) {
-                slack.sendMsg(gamesChannel, message);
-                done();
-              });
-            } else {
-              done();
-            }
-          });
-        });
-      }
-    });
   });
 }
