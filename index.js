@@ -7,8 +7,7 @@ var slackAPI = require('slackbotapi');
 
 var twitchTools = require('./twitch_tools');
 
-var gamesChannel = "C0JJ7R672";
-var humanHypeChannel = "C1UK6RYQY";
+var humanHypeChannel = process.env.HUMAN_HYPE_CHANNEL;
 
 var slack = new slackAPI({
   'token': process.env.SLACK_TOKEN,
