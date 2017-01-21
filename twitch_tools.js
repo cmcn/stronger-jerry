@@ -18,7 +18,7 @@ module.exports = {
         } else {
           result['rows'].forEach(function(row) {
             const streamName = row['name'];
-            const message = "https://www.twitch.com/" + streamName + " is now online!";
+            const message = "https://www.twitch.tv/" + streamName + " is now online!";
             const url = "https://api.twitch.tv/kraken/streams/" + streamName;
 
             request({
