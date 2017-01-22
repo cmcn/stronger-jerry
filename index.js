@@ -18,17 +18,24 @@ var slack = new slackAPI({
   'autoReconnect': true
 });
 
+twitchTools.updateStats();
+
 var weatherJob = new cronJob('00 00 7 * * *', function() {
   getWeather(humanHypeChannel);
 });
 
-var twitchJob = new cronJob('0 * * * * *', function() {
+var twitchOnlineStatusJob = new cronJob('0 * * * * *', function() {
   twitchTools.checkTwitchOnlineStatus(slack);
+});
+
+var twitchStatsJobs = new cronJob('00 00 00 * * *', function() {
+  twitchTools.updateStats();
 });
 
 slack.on('hello', function() {
   weatherJob.start();
-  twitchJob.start();
+  twitchOnlineStatusJob.start();
+  twitchStatsJobs.start();
 });
 
 app.set('port', (process.env.PORT || 5000));
