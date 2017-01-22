@@ -1,7 +1,8 @@
 require('dotenv').load();
 
 var cronJob = require('cron').CronJob;
-var pg = require('pg');
+var exphbs  = require('express-handlebars');
+var express = require('express');
 var request = require('request');
 var slackAPI = require('slackbotapi');
 
@@ -10,6 +11,7 @@ var twitchTools = require('./twitch_tools');
 var gamesChannel = process.env.GAMES_CHANNEL;
 var humanHypeChannel = process.env.HUMAN_HYPE_CHANNEL;
 
+var app = express();
 var slack = new slackAPI({
   'token': process.env.SLACK_TOKEN,
   'logging': true,
@@ -27,6 +29,20 @@ var twitchJob = new cronJob('0 * * * * *', function() {
 slack.on('hello', function() {
   weatherJob.start();
   twitchJob.start();
+});
+
+app.set('port', (process.env.PORT || 5000));
+app.use(express.static(__dirname + '/public'));
+app.set('views', __dirname + '/views');
+app.engine('handlebars', exphbs({defaultLayout: 'main'}));
+app.set('view engine', 'handlebars');
+
+app.get('/', function(request, response) {
+  response.render('index');
+});
+
+app.listen(app.get('port'), function() {
+  console.log('Node app is running on port', app.get('port'));
 });
 
 slack.on('message', function (data) {
