@@ -57,6 +57,9 @@ function routeSlackCommand(data) {
         case '!removeChannel':
           promise = Twitch.removeTwitchChannel(value);
           break;
+        case '!listChannels':
+          promise = Twitch.listChannels();
+          break;
       };
 
       if (promise) {

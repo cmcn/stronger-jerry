@@ -125,4 +125,31 @@ module.exports = {
       });
     });
   },
+
+  listChannels: function() {
+    return new Promise(function(resolve, reject) {
+      pg.connect(process.env.DATABASE_URL, function(err, client, done) {
+        if (err) {
+          console.log("PG Connect Error: " + err);
+        }
+
+        client.query("SELECT * FROM twitch_channels", function(err, result) {
+          if (err) {
+            console.log("PG Query Error: " + err);
+          }
+
+          done();
+
+          debugger;
+
+          var message = "";
+          result.rows.forEach(function(row) {
+            message = message + row.name + "\n";
+          });
+
+          resolve(message);
+        })
+      });
+    });
+  },
 }
