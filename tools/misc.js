@@ -8,7 +8,6 @@ module.exports = {
       request(url, function(error, response, body) {
         const rand = Math.floor((Math.random() * 100) + 1);
 
-        console.log('request working');
         resolve(JSON.parse(body)['data']['children'][rand]['data']['preview']['images'][0]['source']['url']);
       });
     });
@@ -26,6 +25,7 @@ module.exports = {
   playRoulette: function() {
     return new Promise(function(resolve, reject) {
       const rand = Math.floor(Math.random() * 6);
+
       resolve(rand === 0 ? ':boom: :gun: You\'re dead' : 'You live.... for now.');
     });
   },

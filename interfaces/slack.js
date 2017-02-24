@@ -1,4 +1,4 @@
-var SlackAPI = require('slackbotapi');
+const SlackAPI = require('slackbotapi');
 
 module.exports = {
   slackApi: new SlackAPI({

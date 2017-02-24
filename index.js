@@ -1,14 +1,23 @@
 require('dotenv').load();
 
-var cronJob = require('cron').CronJob;
-var SlackInterface = require('./interfaces/slack');
-var Misc = require('./tools/misc');
-var Twitch = require('./tools/twitch');
+const cronJob = require('cron').CronJob;
+const DiscordInterface = require('./interfaces/discord');
+const SlackInterface = require('./interfaces/slack');
+const Misc = require('./tools/misc');
+const Twitch = require('./tools/twitch');
 
-var { slackApi } = SlackInterface;
+const { discordClient } = DiscordInterface;
+const { slackApi } = SlackInterface;
 
-var gamesChannel = process.env.GAMES_CHANNEL;
-var humanHypeChannel = process.env.HUMAN_HYPE_CHANNEL;
+const gamesChannel = process.env.GAMES_CHANNEL;
+const humanHypeChannel = process.env.HUMAN_HYPE_CHANNEL;
+
+// Discord Listeners
+discordClient.on('hello', function() {
+  console.log('yolo');
+});
+
+discordClient.login(process.env.DISCORD_TOKEN);
 
 // Slack Listeners
 slackApi.on('hello', function() {
@@ -21,11 +30,11 @@ slackApi.on('message', function(data) {
 
 // Start Cron Jobs
 function startJobs() {
-  var weatherJob = new cronJob('00 00 7 * * *', function() {
+  const weatherJob = new cronJob('00 00 7 * * *', function() {
     slackApi.sendMsg(humanHypeChannel, Misc.getWeather());
   });
-  var twitchOnlineStatusJob = new cronJob('0 * * * * *', function() {
-    var messages = Twitch.checkTwitchOnlineStatus();
+  const twitchOnlineStatusJob = new cronJob('0 * * * * *', function() {
+    const messages = Twitch.checkTwitchOnlineStatus();
 
     messages.forEach(function(message) {
       slackApi.sendMsg(gamesChannel, message);

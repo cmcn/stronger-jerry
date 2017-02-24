@@ -10,12 +10,10 @@ module.exports = {
     pg.connect(process.env.DATABASE_URL, function(err, client, done) {
       if (err) {
         console.log("PG Connect error: " + err);
-
         done();
       }
 
       client.query('SELECT * FROM twitch_channels', function(err, result) {
-
         if (err) {
           console.log("PG Query Error: " + err);
         } else {
@@ -139,8 +137,6 @@ module.exports = {
           }
 
           done();
-
-          debugger;
 
           var message = "";
           result.rows.forEach(function(row) {

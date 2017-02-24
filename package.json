@@ -20,9 +20,12 @@
   "homepage": "https://github.com/cmcn/stronger-jerry",
   "dependencies": {
     "cron": "^1.1.0",
+    "discord.js": "^11.0.0",
     "dotenv": "^4.0.0",
+    "erlpack": "github:hammerandchisel/erlpack",
     "pg": "^6.1.0",
     "request": "^2.74.0",
-    "slackbotapi": "^1.3.9"
+    "slackbotapi": "^1.3.9",
+    "uws": "^0.13.0"
   }
 }
