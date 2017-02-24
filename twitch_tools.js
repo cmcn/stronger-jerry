@@ -116,47 +116,4 @@ module.exports = {
       });
     });
   },
-
-  updateStats: function() {
-    pg.connect(process.env.DATABASE_URL, function(err, client, done) {
-      if (err) {
-        console.log("PG Connect Error: " + err);
-      }
-
-      const url = "https://api.twitch.tv/kraken/channels/cumpp";
-
-      request({
-        headers: { "Client-ID": process.env.TWITCH_CLIENT_ID },
-        uri: url
-      }, function(error, response, body) {
-        const followers = JSON.parse(body)['followers'];
-        const views = JSON.parse(body)['views'];
-        const today = new Date();
-
-        var year = today.getFullYear().toString();
-        var month = (today.getMonth() + 1).toString();
-        var day = today.getDate().toString();
-
-        if (month.length < 2) {
-          month = '0' + month;
-        }
-
-        if (day.length < 2) {
-          day = '0' + day;
-        }
-
-        const dateString = year + '-' + month + '-' + day;
-        const insertString = "('cumpp', '" + dateString + "', " + views + ", " + followers + ")";
-
-        client.query("INSERT INTO twitch_stats (channel, date, views, followers) values " + insertString, function(err, result) {
-          if (err) {
-            console.log("PG Query Error: " + err);
-          }
-
-          console.log('stats updated');
-          done();
-        });
-      });
-    });
-  },
 }
