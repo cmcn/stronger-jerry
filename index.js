@@ -31,7 +31,9 @@ slackApi.on('message', function(data) {
 // Start Cron Jobs
 function startJobs() {
   const weatherJob = new cronJob('00 00 7 * * *', function() {
-    slackApi.sendMsg(humanHypeChannel, Misc.getWeather());
+    Misc.getWeather().then(function(message) {
+      slackApi.sendMsg(humanHypeChannel, message);
+    });
   });
   const twitchOnlineStatusJob = new cronJob('0 * * * * *', function() {
     const messages = Twitch.checkTwitchOnlineStatus();
