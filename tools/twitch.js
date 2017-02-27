@@ -4,7 +4,7 @@ var request = require('request');
 var gamesChannel = process.env.GAMES_CHANNEL;
 
 module.exports = {
-  checkTwitchOnlineStatus: function() {
+  checkTwitchOnlineStatus: function(chatClient) {
     var messages = [];
 
     pg.connect(process.env.DATABASE_URL, function(err, client, done) {
@@ -13,7 +13,7 @@ module.exports = {
         done();
       }
 
-      client.query('SELECT * FROM twitch_channels', function(err, result) {
+      client.query("SELECT * FROM twitch_channels WHERE chat_client = '" + chatClient + "'", function(err, result) {
         if (err) {
           console.log("PG Query Error: " + err);
         } else {

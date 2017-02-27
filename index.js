@@ -1,6 +1,8 @@
 require('dotenv').load();
 
 const cronJob = require('cron').CronJob;
+const settings = require('./settings.json');
+
 const DiscordInterface = require('./interfaces/discord');
 const SlackInterface = require('./interfaces/slack');
 const Misc = require('./tools/misc');
@@ -9,19 +11,16 @@ const Twitch = require('./tools/twitch');
 const { discordClient } = DiscordInterface;
 const { slackApi } = SlackInterface;
 
-const gamesChannel = process.env.GAMES_CHANNEL;
-const humanHypeChannel = process.env.HUMAN_HYPE_CHANNEL;
-
 // Discord Listeners
 discordClient.on('hello', function() {
-  console.log('yolo');
+  startDiscordJobs();
 });
 
 discordClient.login(process.env.DISCORD_TOKEN);
 
 // Slack Listeners
 slackApi.on('hello', function() {
-  startJobs();
+  startSlackJobs();
 });
 
 slackApi.on('message', function(data) {
@@ -29,17 +28,29 @@ slackApi.on('message', function(data) {
 });
 
 // Start Cron Jobs
-function startJobs() {
+function startDiscordJobs() {
+  const twitchStatusJob = new cronJob('0 * * * * *', function() {
+    const messages = Twitch.checkTwitchOnlineStatus('discord');
+
+    messages.forEach(function(message) {
+      discordClient.channels.get(settings.discordChannels.twitch).sendMessage(message);
+    });
+  });
+
+  twitchStatusJob.start();
+}
+
+function startSlackJobs() {
   const weatherJob = new cronJob('00 00 7 * * *', function() {
     Misc.getWeather().then(function(message) {
-      slackApi.sendMsg(humanHypeChannel, message);
+      slackApi.sendMsg(settings.slackChannels.humanHype, message);
     });
   });
   const twitchOnlineStatusJob = new cronJob('0 * * * * *', function() {
-    const messages = Twitch.checkTwitchOnlineStatus();
+    const messages = Twitch.checkTwitchOnlineStatus('slack');
 
     messages.forEach(function(message) {
-      slackApi.sendMsg(gamesChannel, message);
+      slackApi.sendMsg(settings.slackChannels.games, message);
     });
   });
 
@@ -58,7 +69,7 @@ function routeSlackCommand(data) {
 
     command = splitText[0];
 
-    if (data.channel === gamesChannel) {
+    if (data.channel === settings.slackChannels.games) {
       const value = splitText[1];
 
       switch(command) {
@@ -75,7 +86,7 @@ function routeSlackCommand(data) {
 
       if (promise) {
         promise.then(function(message) {
-          slackApi.sendMsg(gamesChannel, message);
+          slackApi.sendMsg(settings.slackChannels.games, message);
         });
 
         return;
