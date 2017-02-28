@@ -30,10 +30,12 @@ slackApi.on('message', function(data) {
 // Start Cron Jobs
 function startDiscordJobs() {
   const twitchStatusJob = new cronJob('0 * * * * *', function() {
-    const messages = Twitch.checkTwitchOnlineStatus('discord');
-
-    messages.forEach(function(message) {
-      discordClient.channels.get(settings.discordChannels.twitch).sendMessage(message);
+    Twitch.checkTwitchOnlineStatus('discord').then(function(promises) {
+      Promise.all(promises).then(function(messages) {
+        messages.forEach(function(message) {
+          discordClient.channels.get(settings.discordChannels.twitch).sendMessage(message);
+        });
+      });
     });
   });
 
@@ -47,10 +49,12 @@ function startSlackJobs() {
     });
   });
   const twitchOnlineStatusJob = new cronJob('0 * * * * *', function() {
-    const messages = Twitch.checkTwitchOnlineStatus('slack');
-
-    messages.forEach(function(message) {
-      slackApi.sendMsg(settings.slackChannels.games, message);
+    Twitch.checkTwitchOnlineStatus('slack').then(function(promises) {
+      Promise.all(promises).then(function(messages) {
+        messages.forEach(function(message) {
+          slackApi.sendMsg(settings.slackChannels.games, message);
+        });
+      });
     });
   });
 
