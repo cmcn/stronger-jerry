@@ -63,13 +63,13 @@ function routeSlackCommand(data) {
 
       switch(command) {
         case '!addChannel':
-          Twitch.addTwitchChannel(value);
+          Twitch.addTwitchChannel('slack', value);
           break;
         case '!removeChannel':
-          Twitch.removeTwitchChannel(value);
+          Twitch.removeTwitchChannel('slack', value);
           break;
         case '!listChannels':
-          Twitch.listChannels();
+          Twitch.listChannels('slack');
           break;
       };
     }

@@ -56,7 +56,7 @@ module.exports = {
     });
   },
 
-  addTwitchChannel: function(channelName) {
+  addTwitchChannel: function(chatClient, channelName) {
     const url = 'https://api.twitch.tv/kraken/channels/' + channelName;
 
     request({
@@ -64,7 +64,7 @@ module.exports = {
       uri: url
     }, function(error, response, body) {
       if (response['statusCode'] === 404) {
-        sendMessage('slack', channelName + " does not exist.");
+        sendMessage(chatClient, channelName + " does not exist.");
         return;
       }
 
@@ -74,40 +74,40 @@ module.exports = {
           return;
         }
 
-        client.query("SELECT * FROM twitch_channels WHERE LOWER(name) = LOWER('" + channelName + "')", function(err, result) {
+        client.query("SELECT * FROM twitch_channels WHERE LOWER(name) = LOWER('" + channelName + "') AND '" + chatClient + "' = any(chat_clients)", function(err, result) {
           if (result['rows'].length > 0) {
-            sendMessage('slack', channelName + " is already on the list.");
+            sendMessage(chatClient, channelName + " is already on the list.");
             return;
           }
 
-          client.query("INSERT INTO twitch_channels (name) VALUES (LOWER('" + channelName + "'))", function(err, result) {
+          client.query("INSERT INTO twitch_channels (name, chat_clients) VALUES (LOWER('" + channelName + "'), array['" + chatClient + "'])", function(err, result) {
             if (err) {
               console.log("PG Query Error: " + err);
               return;
             }
 
-            sendMessage('slack', channelName + " has been added to the list.");
+            sendMessage(chatClient, channelName + " has been added to the list.");
           });
         });
       });
     });
   },
 
-  removeTwitchChannel: function(channelName) {
+  removeTwitchChannel: function(chatClient, channelName) {
     pg.connect(process.env.DATABASE_URL, function(err, client, done) {
       if (err) {
         console.log("PG Connect Error: " + err);
         return;
       }
 
-      client.query("SELECT * FROM twitch_channels WHERE LOWER(name) = LOWER('" + channelName + "')", function(err, result) {
+      client.query("SELECT * FROM twitch_channels WHERE LOWER(name) = LOWER('" + channelName + "') AND '" + chatClient + "' = any(chat_clients)", function(err, result) {
         if (err) {
           console.log("PG Query Error: " + err);
           return;
         }
 
         if (result['rows'].length > 0) {
-          client.query("DELETE FROM twitch_channels WHERE LOWER(name) = LOWER('" + channelName + "')", function(err, result) {
+          client.query("UPDATE twitch_channels SET chat_clients = array_remove(chat_clients, '" + chatClient + "') WHERE LOWER(name) = LOWER('" + channelName + "')", function(err, result) {
             if (err) {
               console.log("PG Query Error: " + err);
               return;
@@ -116,20 +116,20 @@ module.exports = {
             sendMessage('slack', channelName + " has been removed.");
           });
         } else {
-          resolve('slack', channelName + " is not on the list.");
+          sendMessage('slack', channelName + " is not on the list.");
         }
       });
     });
   },
 
-  listChannels: function() {
+  listChannels: function(chatClient) {
     pg.connect(process.env.DATABASE_URL, function(err, client, done) {
       if (err) {
         console.log("PG Connect Error: " + err);
         return;
       }
 
-      client.query("SELECT * FROM twitch_channels", function(err, result) {
+      client.query("SELECT * FROM twitch_channels WHERE '" + chatClient + "' = any(chat_clients)", function(err, result) {
         if (err) {
           console.log("PG Query Error: " + err);
           return;
