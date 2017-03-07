@@ -74,20 +74,28 @@ module.exports = {
           return;
         }
 
-        client.query("SELECT * FROM twitch_channels WHERE LOWER(name) = LOWER('" + channelName + "') AND '" + chatClient + "' = any(chat_clients)", function(err, result) {
-          if (result['rows'].length > 0) {
+        client.query("SELECT * FROM twitch_channels WHERE LOWER(name) = LOWER('" + channelName + "')", function(err, result) {
+          if (result['rows'].length === 0) {
+            client.query("INSERT INTO twitch_channels (name, chat_clients) VALUES (LOWER('" + channelName + "'), array['" + chatClient + "'])", function(err, result) {
+              if (err) {
+                console.log("PG Query Error: " + err);
+                return;
+              }
+
+              sendMessage(chatClient, channelName + " has been added to the list.");
+            });
+          } else if (result['rows'][0].chat_clients.indexOf(chatClient) < 0) {
+            client.query("UPDATE twitch_channels SET chat_clients = array_append(chat_clients, '" + chatClient + "') WHERE LOWER(name) = LOWER('" + channelName + "')", function(err, result) {
+              if (err) {
+                console.log("PG Query Error: " + err);
+                return;
+              }
+
+              sendMessage(chatClient, channelName + " has been added to the list.");
+            });
+          } else {
             sendMessage(chatClient, channelName + " is already on the list.");
-            return;
           }
-
-          client.query("INSERT INTO twitch_channels (name, chat_clients) VALUES (LOWER('" + channelName + "'), array['" + chatClient + "'])", function(err, result) {
-            if (err) {
-              console.log("PG Query Error: " + err);
-              return;
-            }
-
-            sendMessage(chatClient, channelName + " has been added to the list.");
-          });
         });
       });
     });
