@@ -9,7 +9,7 @@ const Misc = require('./tools/misc');
 const Twitch = require('./tools/twitch');
 
 // Discord Listeners
-discordClient.on('hello', function() {
+discordClient.on('ready', function() {
   startDiscordJobs();
 });
 

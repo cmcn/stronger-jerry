@@ -1,14 +1,18 @@
 const pg = require('pg');
 const request = require('request');
 const { slackApi } = require('../interfaces/slack');
+const { discordClient } = require('../interfaces/discord');
 const settings = require('../settings.json');
 
-const gamesChannel = settings.slackChannels.games;
+const slackChannel = settings.slackChannels.games;
+const discordChannel = settings.discordChannels.twitch;
 const clientID = process.env.TWITCH_CLIENT_ID;
 
 function sendMessage(chatClient, message) {
   if (chatClient === 'slack') {
-    slackApi.sendMsg(gamesChannel, message);
+    slackApi.sendMsg(slackChannel, message);
+  } else if (chatClient === 'discord') {
+    discordClient.channels.get(settings.discordChannels.twitch).sendMessage(message);
   }
 }
 
