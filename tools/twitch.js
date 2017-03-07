@@ -1,156 +1,147 @@
 const pg = require('pg');
 const request = require('request');
+const { slackApi } = require('../interfaces/slack');
+const settings = require('../settings.json');
 
-const gamesChannel = process.env.GAMES_CHANNEL;
+const gamesChannel = settings.slackChannels.games;
 const clientID = process.env.TWITCH_CLIENT_ID;
+
+function sendMessage(chatClient, message) {
+  if (chatClient === 'slack') {
+    slackApi.sendMsg(gamesChannel, message);
+  }
+}
 
 module.exports = {
   checkTwitchOnlineStatus: function(chatClient) {
-    return new Promise(function(resolve, reject) {
-      var promises = [];
+    pg.connect(process.env.DATABASE_URL, function(err, client, done) {
+      if (err) {
+        console.log("PG Connect error: " + err);
+        return;
+      }
 
-      pg.connect(process.env.DATABASE_URL, function(err, client, done) {
+      client.query("SELECT name, online FROM twitch_channels WHERE '" + chatClient + "' = any(chat_clients);", function(err, result) {
         if (err) {
-          console.log("PG Connect error: " + err);
-          done();
+          console.log("PG Query Error: " + err);
+          return;
         }
 
-        client.query("SELECT * FROM twitch_channels WHERE chat_client = '" + chatClient + "'", function(err, result) {
-          if (err) {
-            console.log("PG Query Error: " + err);
-          } else {
-            result['rows'].forEach(function(row) {
-              const streamName = row['name'];
-              const url = "https://api.twitch.tv/kraken/streams/" + streamName;
+        const urlString = result['rows'].map(row => row['name']).join(',');
+        const url = "https://api.twitch.tv/kraken/streams?channel=" + urlString;
 
-              const promise = new Promise(function(resolve, reject) {
-                request({ headers: { "Client-ID": clientID }, uri: url }, function(error, response, body) {
-                  const message = "https://www.twitch.tv/" + streamName + " is now online!";
-                  const streamDetails = JSON.parse(body)["stream"];
+        request({ headers: { "Client-ID": clientID }, uri: url }, function(error, response, body) {
+          const jsonBody = JSON.parse(body);
+          const messages = [];
 
-                  if (!streamDetails && row['online']) {
-                    console.log('setting offline');
-
-                    client.query("UPDATE twitch_channels SET online = false WHERE name = '" + streamName + "'", function(err, result) {
-                      done();
-                    });
-                  } else if (streamDetails && !row['online']) {
-                    console.log('setting online');
-
-                    client.query("UPDATE twitch_channels SET online = true WHERE name = '" + streamName + "'", function(err, result) {
-                      resolve(message);
-                      done();
-                    });
-                  } else {
-                    done();
-                  }
-
-                  resolve();
-                });
-              });
-
-              promises.push(promise);
+          result['rows'].forEach(function(row) {
+            const streamName = row['name'];
+            const online = jsonBody['streams'].find(function(stream) {
+              return stream['channel']['name'] === streamName;
             });
-            resolve(promises);
-          }
+
+            if (!online && row['online']) {
+              console.log('setting offline');
+
+              client.query("UPDATE twitch_channels SET online = false WHERE name = '" + streamName + "'");
+            } else if (online && !row['online']) {
+              console.log('setting online');
+
+              client.query("UPDATE twitch_channels SET online = true WHERE name = '" + streamName + "'", function(err, result) {
+                sendMessage(chatClient, "http://twitch.tv/" + row['name'] + " is now online!");
+              });
+            }
+          });
         });
       });
     });
   },
 
   addTwitchChannel: function(channelName) {
-    return new Promise(function(resolve, reject) {
-      const url = 'https://api.twitch.tv/kraken/channels/' + channelName;
+    const url = 'https://api.twitch.tv/kraken/channels/' + channelName;
 
-      request({
-        headers: { "Client-ID": process.env.TWITCH_CLIENT_ID },
-        uri: url
-      }, function(error, response, body) {
-        if (response['statusCode'] === 404) {
-          resolve(channelName + " does not exist.");
-        } else {
-          pg.connect(process.env.DATABASE_URL, function(err, client, done) {
-            if (err) {
-              console.log("PG Connect Error: " + err);
-            }
+    request({
+      headers: { "Client-ID": process.env.TWITCH_CLIENT_ID },
+      uri: url
+    }, function(error, response, body) {
+      if (response['statusCode'] === 404) {
+        sendMessage('slack', channelName + " does not exist.");
+        return;
+      }
 
-            client.query("SELECT * FROM twitch_channels WHERE LOWER(name) = LOWER('" + channelName + "')", function(err, result) {
-              if (result['rows'].length > 0) {
-                done();
-
-                resolve(channelName + " is already on the list.");
-              } else {
-                client.query("INSERT INTO twitch_channels (name) VALUES (LOWER('" + channelName + "'))", function(err, result) {
-                  if (err) {
-                    console.log("PG Query Error: " + err);
-                  }
-
-                  done();
-
-                  resolve(channelName + " has been added to the list.");
-                });
-              }
-            });
-          });
-        }
-      });
-    });
-  },
-
-  removeTwitchChannel: function(channelName) {
-    return new Promise(function(resolve, reject) {
       pg.connect(process.env.DATABASE_URL, function(err, client, done) {
         if (err) {
           console.log("PG Connect Error: " + err);
+          return;
         }
 
         client.query("SELECT * FROM twitch_channels WHERE LOWER(name) = LOWER('" + channelName + "')", function(err, result) {
-          if (err) {
-            console.log("PG Query Error: " + err);
-          }
-
           if (result['rows'].length > 0) {
-            client.query("DELETE FROM twitch_channels WHERE LOWER(name) = LOWER('" + channelName + "')", function(err, result) {
-              if (err) {
-                console.log("PG Query Error: " + err);
-              }
-
-              done();
-
-              resolve(channelName + " has been removed.");
-            });
-          } else {
-            done();
-
-            resolve(channelName + " is not on the list.");
+            sendMessage('slack', channelName + " is already on the list.");
+            return;
           }
+
+          client.query("INSERT INTO twitch_channels (name) VALUES (LOWER('" + channelName + "'))", function(err, result) {
+            if (err) {
+              console.log("PG Query Error: " + err);
+              return;
+            }
+
+            sendMessage('slack', channelName + " has been added to the list.");
+          });
         });
       });
     });
   },
 
-  listChannels: function() {
-    return new Promise(function(resolve, reject) {
-      pg.connect(process.env.DATABASE_URL, function(err, client, done) {
+  removeTwitchChannel: function(channelName) {
+    pg.connect(process.env.DATABASE_URL, function(err, client, done) {
+      if (err) {
+        console.log("PG Connect Error: " + err);
+        return;
+      }
+
+      client.query("SELECT * FROM twitch_channels WHERE LOWER(name) = LOWER('" + channelName + "')", function(err, result) {
         if (err) {
-          console.log("PG Connect Error: " + err);
+          console.log("PG Query Error: " + err);
+          return;
         }
 
-        client.query("SELECT * FROM twitch_channels", function(err, result) {
-          if (err) {
-            console.log("PG Query Error: " + err);
-          }
+        if (result['rows'].length > 0) {
+          client.query("DELETE FROM twitch_channels WHERE LOWER(name) = LOWER('" + channelName + "')", function(err, result) {
+            if (err) {
+              console.log("PG Query Error: " + err);
+              return;
+            }
 
-          done();
-
-          var message = "";
-          result.rows.forEach(function(row) {
-            message = message + row.name + "\n";
+            sendMessage('slack', channelName + " has been removed.");
           });
-
-          resolve(message);
-        })
+        } else {
+          resolve('slack', channelName + " is not on the list.");
+        }
       });
+    });
+  },
+
+  listChannels: function() {
+    pg.connect(process.env.DATABASE_URL, function(err, client, done) {
+      if (err) {
+        console.log("PG Connect Error: " + err);
+        return;
+      }
+
+      client.query("SELECT * FROM twitch_channels", function(err, result) {
+        if (err) {
+          console.log("PG Query Error: " + err);
+          return;
+        }
+
+        var message = "";
+        result.rows.forEach(function(row) {
+          message = message + row.name + "\n";
+        });
+
+        sendMessage('slack', message);
+      })
     });
   },
 }

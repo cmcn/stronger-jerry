@@ -3,13 +3,10 @@ require('dotenv').load();
 const cronJob = require('cron').CronJob;
 const settings = require('./settings.json');
 
-const DiscordInterface = require('./interfaces/discord');
-const SlackInterface = require('./interfaces/slack');
+const { discordClient } = require('./interfaces/discord');
+const { slackApi } = require('./interfaces/slack');
 const Misc = require('./tools/misc');
 const Twitch = require('./tools/twitch');
-
-const { discordClient } = DiscordInterface;
-const { slackApi } = SlackInterface;
 
 // Discord Listeners
 discordClient.on('hello', function() {
@@ -30,13 +27,7 @@ slackApi.on('message', function(data) {
 // Start Cron Jobs
 function startDiscordJobs() {
   const twitchStatusJob = new cronJob('0 * * * * *', function() {
-    Twitch.checkTwitchOnlineStatus('discord').then(function(promises) {
-      Promise.all(promises).then(function(messages) {
-        messages.forEach(function(message) {
-          discordClient.channels.get(settings.discordChannels.twitch).sendMessage(message);
-        });
-      });
-    });
+    Twitch.checkTwitchOnlineStatus('discord');
   });
 
   twitchStatusJob.start();
@@ -49,13 +40,7 @@ function startSlackJobs() {
     });
   });
   const twitchOnlineStatusJob = new cronJob('0 * * * * *', function() {
-    Twitch.checkTwitchOnlineStatus('slack').then(function(promises) {
-      Promise.all(promises).then(function(messages) {
-        messages.forEach(function(message) {
-          slackApi.sendMsg(settings.slackChannels.games, message);
-        });
-      });
-    });
+    Twitch.checkTwitchOnlineStatus('slack');
   });
 
   weatherJob.start();
@@ -78,23 +63,15 @@ function routeSlackCommand(data) {
 
       switch(command) {
         case '!addChannel':
-          promise = Twitch.addTwitchChannel(value);
+          Twitch.addTwitchChannel(value);
           break;
         case '!removeChannel':
-          promise = Twitch.removeTwitchChannel(value);
+          Twitch.removeTwitchChannel(value);
           break;
         case '!listChannels':
-          promise = Twitch.listChannels();
+          Twitch.listChannels();
           break;
       };
-
-      if (promise) {
-        promise.then(function(message) {
-          slackApi.sendMsg(settings.slackChannels.games, message);
-        });
-
-        return;
-      }
     }
 
     switch (command) {
