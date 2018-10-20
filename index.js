@@ -9,11 +9,11 @@ const Misc = require('./tools/misc');
 const Twitch = require('./tools/twitch');
 
 // Discord Listeners
-discordClient.on('ready', function() {
-  startDiscordJobs();
-});
+// discordClient.on('ready', function() {
+//   startDiscordJobs();
+// });
 
-discordClient.login(process.env.DISCORD_TOKEN);
+// discordClient.login(process.env.DISCORD_TOKEN);
 
 // Slack Listeners
 slackApi.on('hello', function() {
@@ -25,13 +25,13 @@ slackApi.on('message', function(data) {
 });
 
 // Start Cron Jobs
-function startDiscordJobs() {
-  const twitchStatusJob = new cronJob('0 * * * * *', function() {
-    Twitch.checkTwitchOnlineStatus('discord');
-  });
+// function startDiscordJobs() {
+//   const twitchStatusJob = new cronJob('0 * * * * *', function() {
+//     Twitch.checkTwitchOnlineStatus('discord');
+//   });
 
-  twitchStatusJob.start();
-}
+//   twitchStatusJob.start();
+// }
 
 function startSlackJobs() {
   const weatherJob = new cronJob('00 00 7 * * *', function() {
@@ -39,12 +39,11 @@ function startSlackJobs() {
       slackApi.sendMsg(settings.slackChannels.humanHype, message);
     });
   });
-  const twitchOnlineStatusJob = new cronJob('0 * * * * *', function() {
-    Twitch.checkTwitchOnlineStatus('slack');
-  });
-
   weatherJob.start();
-  twitchOnlineStatusJob.start();
+  // const twitchOnlineStatusJob = new cronJob('0 * * * * *', function() {
+  //   Twitch.checkTwitchOnlineStatus('slack');
+  // });
+  // twitchOnlineStatusJob.start();
 }
 
 function routeSlackCommand(data) {
