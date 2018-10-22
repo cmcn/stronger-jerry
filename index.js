@@ -7,6 +7,7 @@ const { discordClient } = require('./interfaces/discord');
 const { slackApi } = require('./interfaces/slack');
 const Misc = require('./tools/misc');
 const Twitch = require('./tools/twitch');
+const Twitter = require('./tools/twitter');
 
 // Discord Listeners
 // discordClient.on('ready', function() {
@@ -40,6 +41,13 @@ function startSlackJobs() {
     });
   });
   weatherJob.start();
+
+  const puzzleJob = new cronJob('00 00 10 * * 1-5', function() {
+    Twitter.getPuzzle().then((tweetUrl) => {
+      slackApi.sendMsg(settings.slackChannels.random, tweetUrl);
+    });
+  });
+  puzzleJob.start();
   // const twitchOnlineStatusJob = new cronJob('0 * * * * *', function() {
   //   Twitch.checkTwitchOnlineStatus('slack');
   // });
@@ -91,6 +99,8 @@ function routeSlackCommand(data) {
     if (promise) {
       promise.then(function(message) {
         slackApi.sendMsg(data.channel, message);
+      }).catch(function(error) {
+        console.log(error);
       });
     }
   } else if (data.text.toLowerCase().indexOf('jerry') >= 0 && data.text.toLowerCase().indexOf('help') >= 0) {
