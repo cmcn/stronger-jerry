@@ -1,4 +1,5 @@
-var request = require('request')
+const request = require('request');
+const superscript = require('../constants/superscript').dictionary;
 
 module.exports = {
   getDog: function() {
@@ -66,6 +67,19 @@ module.exports = {
       response = "*" + sum.toString() + "*" + "\n[" + rolls.toString() + "]";
 
       resolve(response);
+    });
+  },
+
+  smolText: function(text) {
+    return new Promise(function(resolve, reject) {
+      const split = text.split('');
+      const smol = split.map((char) => {
+        const superScriptChar =  superscript[char.toLowerCase()];
+
+        return superScriptChar ? superScriptChar : char;
+      });
+
+      resolve(smol.join(''));
     });
   },
 

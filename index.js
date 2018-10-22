@@ -55,7 +55,7 @@ function startSlackJobs() {
 }
 
 function routeSlackCommand(data) {
-  var command;
+  var command, value;
 
   if (!data.text) { return; }
 
@@ -66,7 +66,7 @@ function routeSlackCommand(data) {
     command = splitText[0];
 
     if (data.channel === settings.slackChannels.games) {
-      const value = splitText[1];
+      value = splitText[1];
 
       switch(command) {
         case '!addChannel':
@@ -93,6 +93,10 @@ function routeSlackCommand(data) {
         break;
       case '!roll':
         promise = Misc.rollDice(data.text);
+        break;
+      case '!smol':
+        splitText.shift();
+        promise = Misc.smolText(splitText.join(' '));
         break;
     };
 
